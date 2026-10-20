@@ -1,0 +1,37 @@
+name: Aktualizacja rejestru
+
+on:
+  schedule:
+    - cron: '0 5 * * 1,4'   # poniedzialek i czwartek, rano
+  workflow_dispatch:         # przycisk "Run workflow" do recznego uruchomienia
+
+permissions:
+  contents: write
+
+jobs:
+  aktualizuj:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Instalacja bibliotek
+        run: pip install requests beautifulsoup4 pandas openpyxl
+
+      - name: Pobranie i konwersja rejestru
+        run: python aktualizuj_rejestr.py
+
+      - name: Zapis zmian
+        run: |
+          git config user.name "rejestr-bot"
+          git config user.email "rejestr-bot@users.noreply.github.com"
+          git add rejestr.json
+          if git diff --cached --quiet; then
+            echo "Bez zmian."
+          else
+            git commit -m "Aktualizacja rejestru"
+            git push
+          fi
